@@ -1,36 +1,29 @@
 import pandas as pd
 from altk.language.semantics import Universe
 from learn_quant.quantifier import QuantifierModel
-from itertools import product
+from itertools import product, combinations, permutations
+from altk.language.sampling import powerset
 import random
 
 M_SIZE = 4
-referent_pertinence = pd.read_csv("learn_quant/index.csv").to_dict()
-#referent_pertinence = {"value": ["A", "B", "both", "neither"]}
+X_SIZE = 5
 
-def create_universe(referent_pertinence, M_SIZE):
 
-    quantifier_names = []
-    for size in range(M_SIZE+1):
-        index = [i for i in range(len(referent_pertinence["value"]))]
+def create_universe(M_SIZE, X_SIZE):
+    quantifiers_list = []
+    for m_size in range(M_SIZE):
+        quantifiers_at_msize = []
+        possible_M = [x for x in combinations(range(X_SIZE), M_SIZE)]
+        for M in possible_M:
+            possible_AorB = [set(x) for x in powerset(M)]
+            combs_A_B_for_M = [z for z in product(possible_AorB, possible_AorB)]
+            for (A, B) in combs_A_B_for_M:
+                quantifiers_at_msize.append([set(M), A, B])
+        quantifiers_list.extend(quantifiers_at_msize)
+    quantifiers_universe = Universe([QuantifierModel(M=m, A=a, B=b) for (m, a, b) in quantifiers_list])
+    return quantifiers_universe
 
-        x_universe = product("".join([str(x) for x in index]), repeat=size)
-
-        quantifier_names.extend(["".join(array) for array in x_universe])
-
-        quantifier_list = [QuantifierModel(name) for name in quantifier_names if name != '']
-
-    return Universe(quantifier_list)
-
-quantifiers_universe = create_universe(referent_pertinence, M_SIZE)
-
-"""
-
-print(len(quantifiers_universe))
-
-set([x for x in quantifiers_universe.referents])
-
-set([sorted({2,3,6,4,7})[3]])
-set(6)
-set(sorted({2,3,6,4,7})[3])
-"""
+quantifiers_universe = create_universe(M_SIZE, X_SIZE)
+for x in quantifiers_universe:
+    print(x)
+print("The size of the universe is {}".format(len(quantifiers_universe)))
