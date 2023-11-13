@@ -4,7 +4,7 @@ from learn_quant.quantifier import QuantifierModel
 from itertools import product
 import random
 
-M_SIZE = 1
+M_SIZE = 4
 referent_pertinence = pd.read_csv("learn_quant/index.csv").to_dict()
 #referent_pertinence = {"value": ["A", "B", "both", "neither"]}
 
