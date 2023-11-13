@@ -6,12 +6,10 @@ from altk.language.sampling import powerset
 import random
 
 M_SIZE = 4
-X_SIZE = 6
+X_SIZE = 5
 
 
-referent_pertinence = {"value": ["A", "B", "both", "neither"]}
-
-def create_universe(referent_pertinence, M_SIZE, X_SIZE):
+def create_universe(M_SIZE, X_SIZE):
     quantifiers_list = []
     for m_size in range(M_SIZE):
         quantifiers_at_msize = []
@@ -22,8 +20,10 @@ def create_universe(referent_pertinence, M_SIZE, X_SIZE):
             for (A, B) in combs_A_B_for_M:
                 quantifiers_at_msize.append([set(M), A, B])
         quantifiers_list.extend(quantifiers_at_msize)
-    quantifier_models_list = [QuantifierModel(M=m, A=a, B=b, X=X_SIZE) for (m, a, b) in quantifiers_list]
-    return quantifier_models_list
+    quantifiers_universe = Universe([QuantifierModel(M=m, A=a, B=b, X=X_SIZE) for (m, a, b) in quantifiers_list])
+    return quantifiers_universe
 
-quantifier_universe = create_universe(referent_pertinence, M_SIZE, X_SIZE)
-print("The size of the universe is {}".format(len(quantifier_universe)))
+quantifiers_universe = create_universe(M_SIZE, X_SIZE)
+for x in quantifiers_universe:
+    print(x)
+print("The size of the universe is {}".format(len(quantifiers_universe)))

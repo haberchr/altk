@@ -11,7 +11,7 @@ from ..meaning import quantifiers_universe
 
 if __name__ == "__main__":
     expressions_by_meaning = quantifiers_grammar.get_unique_expressions(
-        1,
+        3,
         max_size=2 ** len(quantifiers_universe),
         unique_key=lambda expr: expr.evaluate(quantifiers_universe),
         compare_func=lambda e1, e2: len(e1) < len(e2),
