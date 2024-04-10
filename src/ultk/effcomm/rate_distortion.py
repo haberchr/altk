@@ -35,16 +35,12 @@ def language_to_ib_point(
 
             `distortion`: the distortion E[DKL[ M || M_hat ]] = I[M:U] - I[W:U], in bits
     """
-    result = language_to_ib_encoder_decoder(
-        language=language,
-        prior=prior,
-        meaning_dists=meaning_dists,
-    )
+    args = (language, prior, meaning_dists)
+    result = language_to_ib_encoder_decoder(*args)
     return ib_encoder_to_point(
-        prior=prior,
-        meaning_dists=meaning_dists,
-        encoder=result["encoder"].normalized_weights(),
-        decoder=result["decoder"].normalized_weights(),
+        *args[1:],
+        result["encoder"],
+        result["decoder"],
     )
 
 
@@ -68,9 +64,7 @@ def language_to_ib_encoder_decoder(
     Args:
         language: the lexicon from which to infer a speaker (encoder).
 
-        prior: array of shape `|meanings|` representing the communicative need distribution
-
-        meaning_dists: array of shape `(|meanings|, |meanings|)` representing the distribution over world states given meanings.
+        prior: communicative need distribution
 
     Returns:
         a dict of the form
@@ -91,32 +85,31 @@ def language_to_ib_encoder_decoder(
 
 
 def ib_encoder_to_point(
-    prior: np.ndarray,
     meaning_dists: np.ndarray,
+    prior: np.ndarray,
     encoder: np.ndarray,
     decoder: np.ndarray = None,
 ) -> tuple[float]:
     """Return (complexity, accuracy, comm_cost) IB coordinates.
 
     Args:
-        prior: array of shape `|meanings|` representing the communicative need distribution
-
         meaning_dists: array of shape `(|meanings|, |meanings|)` representing the distribution over world states given meanings.
+
+        prior: array of shape `|meanings|` representing the communicative need distribution
 
         encoder: array of shape `(|meanings|, |words|)` representing P(W | M)
 
         decoder: array of shape `(|words|, |meanings|)` representing P(M | W).  By default is None, and the Bayesian optimal decoder will be inferred.
     """
-
     if decoder is None:
         decoder = ib_optimal_decoder(encoder, prior, meaning_dists)
+
     encoder = rows_zero_to_uniform(encoder)
     decoder = rows_zero_to_uniform(decoder)
 
     # IB complexity = info rate of encoder = I(meanings; words)
     complexity = information_cond(prior, encoder)
     # IB accuracy/informativity = I(words; world states)
-
     accuracy = MI(meaning_dists @ joint(encoder, prior))
 
     # IB comm_cost = distortion = E[DKL[speaker meaning || listener meaning]],
@@ -164,10 +157,6 @@ def get_ib_bound(
         meaning_dists: array of shape `(|meanings|, |meanings|)` representing the distribution over world states given meanings.
 
         prior: array of shape `|meanings|` representing the communicative need distribution
-
-        args: propagated to `IBOptimizer`
-
-        kwargs: propagated to `IBOptimizer`
 
     Returns:
         a list of `rdot.ba.IBResult` namedtuples.
