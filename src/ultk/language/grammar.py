@@ -112,14 +112,16 @@ class GrammaticalExpression(Expression):
         """Get the antimeaning of this expression, i.e. the set of all referents for which
         the expression evaluates to False."""
 
-        return Meaning(set(self.meaning.universe.referents) - set(self.meaning.referents),
-                       self.meaning.universe)
-    
+        return Meaning(
+            set(self.meaning.universe.referents) - set(self.meaning.referents),
+            self.meaning.universe,
+        )
+
     def draw_referent(self, antimeaning=False):
         """Get a random referent from the meaning's referents."""
         if antimeaning:
             return random.choice(list(self.antimeaning.referents))
-        return random.choice(list(self.meaning.referents)) 
+        return random.choice(list(self.meaning.referents))
 
     def to_dict(self) -> dict:
         the_dict = super().to_dict()

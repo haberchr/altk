@@ -18,8 +18,10 @@ from scipy import sparse
 
 
 class MonotonicityMeasurer:
-    
-    def __init__(self, universe: QuantifierUniverse, monotone_set: str ='A', down: bool = False):
+
+    def __init__(
+        self, universe: QuantifierUniverse, monotone_set: str = "A", down: bool = False
+    ):
         """_summary_
 
         Args:
@@ -31,7 +33,7 @@ class MonotonicityMeasurer:
         self.universe = universe
         self.monotone_set = monotone_set
         self.concept_lattice = self._calculate_lattice()
-    
+
     def _get_names(self) -> list:
         """Get the names of the referents in the loaded quantifier universe.
 
@@ -48,19 +50,27 @@ class MonotonicityMeasurer:
         """
         truth_array = []
         for quantifier_model in self.universe.referents:
-            truth_vector = tuple(True if x == '2' else False for x in quantifier_model.name)
+            truth_vector = tuple(
+                True if x == "2" else False for x in quantifier_model.name
+            )
             truth_array.append(truth_vector)
-        truth_df = pd.concat([pd.DataFrame(self._get_names()).rename(columns={0: 'names'}), pd.DataFrame(truth_array)], axis=1).set_index("names")
+        truth_df = pd.concat(
+            [
+                pd.DataFrame(self._get_names()).rename(columns={0: "names"}),
+                pd.DataFrame(truth_array),
+            ],
+            axis=1,
+        ).set_index("names")
         return truth_df
 
     def _switch_direction(self, bools: list[list[bool]]) -> list[list[bool]]:
         """Switches the value of True to False and vice versa.
 
         Args:
-            bool (list[list[bool]]): Accepts a list of lists of bools 
+            bool (list[list[bool]]): Accepts a list of lists of bools
 
         Returns:
-            list[list[bool]]: A list of lists of bools, flipped unless self.down == True. 
+            list[list[bool]]: A list of lists of bools, flipped unless self.down == True.
         """
         if self.down:
             return bools
@@ -68,7 +78,7 @@ class MonotonicityMeasurer:
             return np.invert(bools)
 
     def _calculate_lattice(self) -> Context:
-        """ 
+        """
 
         Returns:
             Context: Created from ``objects``, ``properties``, and ``bools`` correspondence.
@@ -83,12 +93,13 @@ class MonotonicityMeasurer:
         truth_df = self._get_truth_matrix()
         objects = truth_df.index.astype(str).tolist()
         properties = [x for x in truth_df.columns]
-        bools = list(truth_df.fillna(False).astype(bool).itertuples(index=False, name=None))
+        bools = list(
+            truth_df.fillna(False).astype(bool).itertuples(index=False, name=None)
+        )
         bools = self._switch_direction(bools)
         return Context(objects, properties, bools)
-    
-    def _get_sub_structures(self, name: list[str]) -> set[str]:
 
+    def _get_sub_structures(self, name: list[str]) -> set[str]:
         """Accepts a list of a singleton name to get a set of substructures of the indexed model, excluding the indexing model name.
 
         Returns:
@@ -97,19 +108,21 @@ class MonotonicityMeasurer:
         """
 
         return set(self.concept_lattice[name][0]) - set(name)
-    
-    def _has_sub_structure(self, name: list[str]) -> bool:
 
+    def _has_sub_structure(self, name: list[str]) -> bool:
         """Identity function for a model having a substructure in the universe.
 
         Returns:
             bool: ``True`` if there is one or more substructures in the universe, otherwise ``False``.
         """
 
-        return True if len(set(self.concept_lattice[name][0]) - set(name)) > 0 else False
-    
-    def _get_sub_structure_in_meaning(self, name: list[str], meaning: Meaning) -> set[str]:
+        return (
+            True if len(set(self.concept_lattice[name][0]) - set(name)) > 0 else False
+        )
 
+    def _get_sub_structure_in_meaning(
+        self, name: list[str], meaning: Meaning
+    ) -> set[str]:
         """Identity function for a model having a substructure in a defined Meaning.
 
         Returns:
@@ -119,17 +132,20 @@ class MonotonicityMeasurer:
         names = set(referent.name for referent in meaning.referents)
 
         return self._get_sub_structures(name) & names
-    
-    def _has_sub_structure_in_meaning(self, name: list[str], meaning: Meaning) -> bool:
 
+    def _has_sub_structure_in_meaning(self, name: list[str], meaning: Meaning) -> bool:
         """Identity function for a model having a substructure in a defined Meaning.
 
         Returns:
             bool: ``True`` if there is one or more substructures in the universe, otherwise ``False``.
         """
 
-        return True if len(self._get_sub_structure_in_meaning(name, meaning)) > 0 else False
-    
+        return (
+            True
+            if len(self._get_sub_structure_in_meaning(name, meaning)) > 0
+            else False
+        )
+
     def upward_monotonicity_entropy(self, all_models, quantifier):
         """Measures degree of upward monotonicity of a quantifiers as
         1 - H(Q | true_pred) / H(Q) where H is (conditional) entropy, and true_pred is the
@@ -147,17 +163,17 @@ class MonotonicityMeasurer:
             return 1
         p_q_true = sum(quantifier) / len(quantifier)
         p_q_false = 1 - p_q_true
-        q_ent = -p_q_true*np.log2(p_q_true) - p_q_false*np.log2(p_q_false)
+        q_ent = -p_q_true * np.log2(p_q_true) - p_q_false * np.log2(p_q_false)
 
         def get_preds(num_arr, num):
             """Given an array of ints, and an int, get all predecessors of the
             model corresponding to int.
             Returns an array of same shape as num_arr, but with bools
             """
-            return num_arr[num,:]
+            return num_arr[num, :]
 
         def has_true_pred(num_arr, y):
-            return np.any(y * num_arr)    
+            return np.any(y * num_arr)
 
         # where necessary?
         true_preds = np.where(np.dot(self.submembership, quantifier) >= 1, 1, 0)
@@ -180,14 +196,18 @@ class MonotonicityMeasurer:
         cond_ent = ent_pred + ent_nopred
 
         # return 0 if q_ent == 0 else 1 - (cond_ent / q_ent)
-        return (1.0 - cond_ent / q_ent)[0,0]
-    
+        return (1.0 - cond_ent / q_ent)[0, 0]
+
     def __call__(self, expressions):
 
         self.metrics = {}
 
-        membership = sparse.lil_matrix((len(self.universe),len(expressions)),dtype=int)
-        submembership = sparse.lil_matrix((len(self.universe),len(self.universe)),dtype=int)
+        membership = sparse.lil_matrix(
+            (len(self.universe), len(expressions)), dtype=int
+        )
+        submembership = sparse.lil_matrix(
+            (len(self.universe), len(self.universe)), dtype=int
+        )
         model_dictionary = {}
         for model_id, model in enumerate(self.universe.referents):
             model_dictionary[model.name] = model_id
@@ -196,13 +216,21 @@ class MonotonicityMeasurer:
                 self.metrics[str(quantifier_expression)] = {}
                 if model in quantifier_expression.meaning.referents:
                     membership[model_id, expression_id] = 1
-            sub_ids = list(map(model_dictionary.__getitem__, self._get_sub_structures([model.name])))
+            sub_ids = list(
+                map(
+                    model_dictionary.__getitem__, self._get_sub_structures([model.name])
+                )
+            )
             for sub_id in sub_ids:
-                submembership[sub_id,model_id] = 1
-        
+                submembership[sub_id, model_id] = 1
+
         self.membership = membership.todense()
         self.submembership = submembership.todense()
 
         for expression_id, quantifier_expression in enumerate(expressions):
             print("Calculating monotonicity for: ", quantifier_expression)
-            self.metrics[str(quantifier_expression)]["monotonicity"] = self.upward_monotonicity_entropy(self.submembership, self.membership[:, expression_id])
+            self.metrics[str(quantifier_expression)]["monotonicity"] = (
+                self.upward_monotonicity_entropy(
+                    self.submembership, self.membership[:, expression_id]
+                )
+            )

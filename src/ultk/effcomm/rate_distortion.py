@@ -106,7 +106,7 @@ def ib_encoder_to_point(
         encoder: array of shape `(|meanings|, |words|)` representing P(W | M)
 
         decoder: array of shape `(|words|, |meanings|)` representing P(M | W).  By default is None, and the Bayesian optimal decoder will be inferred.
-    
+
     Returns:
         a tuple of floats corresponding to `(complexity, accuracy, comm_cost)`.
     """

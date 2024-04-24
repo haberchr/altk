@@ -1,5 +1,6 @@
 from ultk.language.grammar import Grammar, Rule
 
+
 class QuantifierGrammar(Grammar):
     """This is a grammar class but for experiments involving quantifiers.
 
@@ -22,13 +23,19 @@ class QuantifierGrammar(Grammar):
             index (int): Index to add as a primitive.
             weight (float): Weight of the rule.
         """
-        self.add_rule(Rule(name="{}".format(index),
-                           lhs="int",
-                           rhs=None,
-                           function=lambda _: index,
-                           weight=weight))
+        self.add_rule(
+            Rule(
+                name="{}".format(index),
+                lhs="int",
+                rhs=None,
+                function=lambda _: index,
+                weight=weight,
+            )
+        )
 
-    def add_indices_as_primitives(self, indices: Union[int, List[int]], weight: float = 2.0) -> Grammar:
+    def add_indices_as_primitives(
+        self, indices: Union[int, List[int]], weight: float = 2.0
+    ) -> Grammar:
         """Add indices as primitives to the grammar.
 
         Args:
@@ -45,5 +52,6 @@ class QuantifierGrammar(Grammar):
         elif isinstance(indices, list):
             for index in indices:
                 self.add_index_primitive(index, weight)
+
 
 quantifiers_grammar = QuantifierGrammar.from_yaml("learn_quant/grammar.yml")
