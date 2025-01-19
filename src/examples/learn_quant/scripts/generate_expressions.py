@@ -10,18 +10,17 @@ from omegaconf import DictConfig, OmegaConf
 
 from ultk.language.grammar import GrammaticalExpression
 from ultk.language.semantics import Meaning
-from ultk.language.grammar import Grammar
 from typing import Any
 
 from ..quantifier import QuantifierUniverse
 from ..grammar import QuantifierGrammar, add_indices
 from ..monotonicity import create_universe
 from ..util import save_quantifiers, save_inclusive_generation
-from typing import Iterable
 
 # e.g.:
 # python -m learn_quant.scripts.generate_expressions mode=generate universe.inclusive_universes=false universe.m_size=4 universe.x_size=5 grammar.depth=3 recipe=base grammar.indices=true
 # HYDRA_FULL_ERROR=1 python -m learn_quant.scripts.generate_expressions mode=time_trial recipe=base
+
 
 def enumerate_quantifiers(
     depth: int,
@@ -31,10 +30,10 @@ def enumerate_quantifiers(
 
     expressions_by_meaning: dict[Meaning, GrammaticalExpression] = (
         quantifiers_grammar.get_unique_expressions(
-        depth,
-        max_size=2 ** len(quantifiers_universe),
-        unique_key=lambda expr: expr.evaluate(quantifiers_universe),
-        compare_func=lambda e1, e2: len(e1) < len(e2),
+            depth,
+            max_size=2 ** len(quantifiers_universe),
+            unique_key=lambda expr: expr.evaluate(quantifiers_universe),
+            compare_func=lambda e1, e2: len(e1) < len(e2),
         )
     )
 
@@ -47,13 +46,18 @@ def enumerate_quantifiers(
     return expressions_by_meaning
 
 
-def generate_expressions(quantifiers_grammar: QuantifierGrammar, cfg: DictConfig, universe: QuantifierUniverse = None):
+def generate_expressions(
+    quantifiers_grammar: QuantifierGrammar,
+    cfg: DictConfig,
+    universe: QuantifierUniverse = None,
+):
 
-    quantifiers_grammar, indices_tag = add_indices(quantifiers_grammar, 
-                indices=cfg.grammar.indices, 
-                m_size=cfg.universe.m_size, 
-                weight=cfg.grammar.weight,
-                )
+    quantifiers_grammar, indices_tag = add_indices(
+        quantifiers_grammar,
+        indices=cfg.grammar.indices,
+        m_size=cfg.universe.m_size,
+        weight=cfg.grammar.weight,
+    )
 
     if not universe:
         quantifiers_universe = create_universe(cfg.universe.m_size, cfg.universe.x_size)
@@ -71,7 +75,12 @@ def generate_expressions(quantifiers_grammar: QuantifierGrammar, cfg: DictConfig
         / Path("d" + str(cfg.grammar.depth))
     )
     if cfg.save:
-        save_quantifiers(expressions_by_meaning, parent_dir, universe=quantifiers_universe, indices_tag=indices_tag)
+        save_quantifiers(
+            expressions_by_meaning,
+            parent_dir,
+            universe=quantifiers_universe,
+            indices_tag=indices_tag,
+        )
     else:
         return expressions_by_meaning
 
@@ -115,11 +124,12 @@ def generation_time_trial(quantifiers_grammar: QuantifierGrammar, cfg: DictConfi
 
             # Ensure that primitives are added to the grammar up to `m_size`
             quantifiers_grammar_at_depth = deepcopy(quantifiers_grammar)
-            quantifiers_grammar_at_depth, indices_tag = add_indices(quantifiers_grammar_at_depth, 
-                indices=cfg.grammar.indices, 
-                m_size=m_size, 
+            quantifiers_grammar_at_depth, indices_tag = add_indices(
+                quantifiers_grammar_at_depth,
+                indices=cfg.grammar.indices,
+                m_size=m_size,
                 weight=cfg.grammar.weight,
-                )
+            )
             print(quantifiers_grammar_at_depth)
 
             # Create the universe
@@ -155,7 +165,12 @@ def generation_time_trial(quantifiers_grammar: QuantifierGrammar, cfg: DictConfi
 
                 if cfg.save:
                     print("Saving generated expressions...")
-                    save_quantifiers(expressions_by_meaning, parent_dir, universe=quantifier_universe, indices_tag=indices_tag)
+                    save_quantifiers(
+                        expressions_by_meaning,
+                        parent_dir,
+                        universe=quantifier_universe,
+                        indices_tag=indices_tag,
+                    )
 
                 writer.writerow(
                     [
@@ -186,11 +201,12 @@ def generate_inclusive_expressions(quantifiers_grammar, cfg, save=True):
 
         # Ensure that primitives are added to the grammar up to `m_size`
         quantifiers_grammar_at_depth = deepcopy(quantifiers_grammar)
-        quantifiers_grammar_at_depth, indices_tag = add_indices(quantifiers_grammar_at_depth, 
-                indices=cfg.grammar.indices, 
-                m_size=m_size, 
-                weight=cfg.grammar.weight,
-                )
+        quantifiers_grammar_at_depth, indices_tag = add_indices(
+            quantifiers_grammar_at_depth,
+            indices=cfg.grammar.indices,
+            m_size=m_size,
+            weight=cfg.grammar.weight,
+        )
         print(quantifiers_grammar_at_depth)
 
         # Create the universe
@@ -232,7 +248,9 @@ def main(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
 
     if hasattr(cfg.grammar, "typed_rules"):
-        primitives_grammar = QuantifierGrammar.from_module(cfg.grammar.typed_rules.module_path)
+        primitives_grammar = QuantifierGrammar.from_module(
+            cfg.grammar.typed_rules.module_path
+        )
         print(cfg.grammar.path)
         quantifiers_grammar = QuantifierGrammar.from_yaml(cfg.grammar.path)
         grammar = quantifiers_grammar | primitives_grammar
@@ -240,6 +258,7 @@ def main(cfg: DictConfig) -> None:
         grammar = QuantifierGrammar.from_yaml(cfg.grammar.path)
 
     from pprint import pprint
+
     pprint(grammar._rules)
 
     if cfg.universe.inclusive_universes:
@@ -251,6 +270,7 @@ def main(cfg: DictConfig) -> None:
     elif "generate" in cfg.mode:
         # Generate expressions for a single universe at size M
         generate_expressions(grammar, cfg)
+
 
 if __name__ == "__main__":
     main()
